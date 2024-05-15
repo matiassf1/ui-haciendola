@@ -3,6 +3,8 @@ import { Pagination } from "../features/product/Pagination";
 import { PaginationDto, PaginationMetaDto, Product } from "../utils/interfaces";
 import { ProductList } from "../features/product/ProductList";
 import { ModalContainer } from "../features/product/ModalContainer";
+import { Notyf } from "notyf";
+import { useNavigate } from "react-router-dom";
 
 export const ProductPage = () => {
   const [paginationData, setPaginationData] = useState<PaginationMetaDto>();
@@ -13,6 +15,8 @@ export const ProductPage = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const productFetched = useRef(false);
+  const navigate = useNavigate();
+  const notyf = new Notyf();
 
   const fetchProducts = async () => {
     try {
@@ -54,11 +58,34 @@ export const ProductPage = () => {
 
       const result: PaginationDto<Product> = await response.json();
 
-      setPaginationData(result.meta);
+      setPaginationData(result.meta);      
       setProducts(result.data);
       setPage(page);
     } catch (error) {
       console.error('Error fetching products:', error);
+    }
+  }
+
+  const handleDeleteProduct = async (productId: number) => {
+    try {
+      const url = `${import.meta.env.VITE_BASE_API_URL}/product/${productId}`;
+
+      const response = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        notyf.error('Failed to delete product');
+      }
+
+      notyf.success(`The product with ID ${productId} has been deleted.`);
+      fetchProducts();
+
+    } catch (error) {
+      console.error('Error deleting product:', error);
     }
   }
 
@@ -77,14 +104,15 @@ export const ProductPage = () => {
 
     const createProductRequest = {
       url: 'product',
-      method: 'POST'
+      method: 'POST',
+      successMessage: 'Product created successfully!'
     }
 
     const updateProductRequest = {
       url: `product/${product?.id}`,
-      method: 'PATCH'
+      method: 'PATCH',
+      successMessage: 'Product updated successfully!'
     }
-    delete product.id; // dont need this prop into our body request.
 
     let request = createProductRequest;
 
@@ -93,7 +121,7 @@ export const ProductPage = () => {
     }
 
     try {
-
+      delete product.id;
       const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/${request.url}`, {
         method: request.method,
         headers: {
@@ -102,7 +130,12 @@ export const ProductPage = () => {
         body: JSON.stringify(product)
       });
 
-      console.log(await response.json());
+      if (!response.ok) {
+        return notyf.error('BaD');
+      }
+
+      fetchProducts();
+      notyf.success(request.successMessage);
     } catch (error) {
       console.log(error);
     }
@@ -111,8 +144,6 @@ export const ProductPage = () => {
   };
 
   useEffect(() => {
-    console.log('Re-render Products');
-    fetchProducts();
 
   }, [productToEdit]);
 
@@ -125,9 +156,15 @@ export const ProductPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen h-fit">
+    <div className="min-h-screen h-fit p-20">
       {paginationData && (
-        <div className="flex flex-row-reverse">
+        <div className="flex flex-row-reverse justify-between p-14 pt-0">
+          <button onClick={() => {
+            localStorage.removeItem('token_access');
+            navigate('/')
+          }}>
+            Log out
+          </button>
           <Pagination
             totalPages={paginationData.pageCount}
             setPage={onPageChange}
@@ -139,7 +176,11 @@ export const ProductPage = () => {
 
       {paginationData && (
         <div>
-          <ProductList products={products} handleEditProduct={handleEditProduct} />
+          <ProductList
+            products={products}
+            handleEditProduct={handleEditProduct}
+            handleDeleteProduct={handleDeleteProduct}
+          />
         </div>
       )}
 
