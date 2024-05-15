@@ -1,0 +1,3 @@
+- Improve render issues.
+- Add proper validations with yup or another library.
+- Add reset password logic and view.
