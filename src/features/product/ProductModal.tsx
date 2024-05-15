@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Product } from '../../utils/interfaces';
+import { ProductRequest } from '../../utils/interfaces';
 
 interface IProductModal {
-    product: Product | null;
+    product: ProductRequest | null;
     isOpen: boolean;
     onClose: () => void;
-    onSave: (product: Product) => void;
+    onSave: (product: ProductRequest) => void;
 }
 
-const initialProductState: Product = {
+const initialProductState: ProductRequest = {
     title: '',
     handle: '',
     description: '',
@@ -16,13 +16,13 @@ const initialProductState: Product = {
     grams: 0,
     stock: 0,
     price: 0,
-    comparePrice: null,
+    compareprice: 0,
     barcode: '',
 };
 
 
 export const ProductModal = ({ product, isOpen, onClose, onSave }: IProductModal): JSX.Element => {
-    const [formData, setFormData] = useState<Product>(product ? { ...product } : initialProductState);
+    const [formData, setFormData] = useState<ProductRequest>(product ? { ...product } : initialProductState);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -100,6 +100,14 @@ export const ProductModal = ({ product, isOpen, onClose, onSave }: IProductModal
                             value={formData?.grams || ''}
                             onChange={handleChange}
                             placeholder="Grams"
+                            className="border border-zinc-500 bg-zinc-500 p-2 mb-4 w-full rounded placeholder-slate-300"
+                        />
+                        <input
+                            type="number"
+                            name="compareprice"
+                            value={formData?.compareprice || ''}
+                            onChange={handleChange}
+                            placeholder="Compare Price"
                             className="border border-zinc-500 bg-zinc-500 p-2 mb-4 w-full rounded placeholder-slate-300"
                         />
                         <input
